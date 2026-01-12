@@ -1,0 +1,174 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Hue Dashboard</title>
+    <style>
+      body { font-family: system-ui, Arial; margin: 0; background: #0b0b0f; color: #eaeaf2; }
+      header { padding: 16px; position: sticky; top: 0; background: rgba(11,11,15,0.85); backdrop-filter: blur(10px); border-bottom: 1px solid #222; }
+      h1 { margin: 0; font-size: 18px; letter-spacing: 0.5px; }
+      .wrap { padding: 16px; max-width: 980px; margin: 0 auto; }
+      .row { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0 18px; }
+      button { background: #1a1a24; color: #fff; border: 1px solid #2a2a38; padding: 10px 12px; border-radius: 12px; cursor: pointer; }
+      button:hover { border-color: #4a4a66; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+      .card { background: #11111a; border: 1px solid #222236; border-radius: 16px; padding: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+      .name { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-weight: 600; }
+      .badge { font-size: 12px; opacity: 0.9; }
+      .controls { margin-top: 10px; display: grid; gap: 10px; }
+      input[type="range"] { width: 100%; }
+      .muted { color: #a7a7c2; font-size: 12px; }
+      .pill { padding: 6px 10px; border-radius: 999px; border: 1px solid #2a2a38; background: #151521; }
+      .status { font-size: 12px; opacity: 0.85; margin-top: 8px; }
+      .topline { display:flex; align-items:center; justify-content:space-between; gap: 12px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="topline">
+          <h1>🏠 Hue Dashboard</h1>
+          <div class="pill" id="urlpill"></div>
+        </div>
+        <div class="status" id="status">Loading…</div>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <div class="row">
+        <button onclick="setAll(true)">All On</button>
+        <button onclick="setAll(false)">All Off</button>
+        <button onclick="refresh()">Refresh</button>
+      </div>
+
+      <div class="grid" id="grid"></div>
+
+      <div class="muted" style="margin-top:16px;">
+        Tip: bookmark this page on your phone. Put it on your home screen like an app.
+      </div>
+    </div>
+
+    <script>
+      const grid = document.getElementById("grid");
+      const statusEl = document.getElementById("status");
+      document.getElementById("urlpill").textContent = location.href;
+
+      function setStatus(msg) { statusEl.textContent = msg; }
+
+      async function api(path, options) {
+        const res = await fetch(path, options);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.detail || data.error || ("HTTP " + res.status));
+        return data;
+      }
+
+      function huePreset(preset) {
+        // Hue: bri 1-254, hue 0-65535, sat 0-254
+        if (preset === "warm") return { on: true, bri: 200, hue: 8000,  sat: 180 };
+        if (preset === "cool") return { on: true, bri: 200, hue: 45000, sat: 120 };
+        if (preset === "red")  return { on: true, bri: 200, hue: 0,     sat: 254 };
+        if (preset === "blue") return { on: true, bri: 200, hue: 46920, sat: 254 };
+        return { on: true, bri: 200 };
+      }
+
+      async function setAll(on) {
+        setStatus("Setting all lights…");
+        try {
+          await api("/api/all", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ on })
+          });
+          await refresh();
+        } catch (e) {
+          setStatus("Error: " + e.message);
+        }
+      }
+
+      async function setLight(id, payload) {
+        await api(`/api/lights/${id}/state`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      }
+
+      function card(light) {
+        const el = document.createElement("div");
+        el.className = "card";
+
+        const reachable = light.reachable ? "reachable" : "offline";
+        const onText = light.on ? "ON" : "OFF";
+
+        el.innerHTML = `
+          <div class="name">
+            <div>${light.name ?? ("Light " + light.id)}</div>
+            <div class="badge pill">${onText} • ${reachable}</div>
+          </div>
+          <div class="controls">
+            <div class="row">
+              <button data-act="toggle">${light.on ? "Turn Off" : "Turn On"}</button>
+              <button data-act="warm">Warm</button>
+              <button data-act="cool">Cool</button>
+              <button data-act="red">Red</button>
+              <button data-act="blue">Blue</button>
+            </div>
+            <div>
+              <div class="muted">Brightness</div>
+              <input data-act="bri" type="range" min="1" max="254" value="${light.bri ?? 200}" />
+            </div>
+          </div>
+        `;
+
+        el.querySelector('[data-act="toggle"]').onclick = async () => {
+          setStatus(`Updating ${light.name}…`);
+          try {
+            await setLight(light.id, { on: !light.on });
+            await refresh(false);
+          } catch (e) { setStatus("Error: " + e.message); }
+        };
+
+        for (const preset of ["warm", "cool", "red", "blue"]) {
+          el.querySelector(`[data-act="${preset}"]`).onclick = async () => {
+            setStatus(`Setting ${light.name}…`);
+            try {
+              await setLight(light.id, huePreset(preset));
+              await refresh(false);
+            } catch (e) { setStatus("Error: " + e.message); }
+          };
+        }
+
+        const slider = el.querySelector('[data-act="bri"]');
+        let t = null;
+        slider.oninput = () => {
+          clearTimeout(t);
+          const bri = Number(slider.value);
+          t = setTimeout(async () => {
+            setStatus(`Dimming ${light.name}…`);
+            try {
+              await setLight(light.id, { on: true, bri });
+              setStatus("Ready");
+            } catch (e) { setStatus("Error: " + e.message); }
+          }, 150);
+        };
+
+        return el;
+      }
+
+      async function refresh(showLoading = true) {
+        if (showLoading) setStatus("Loading lights…");
+        try {
+          const lights = await api("/api/lights");
+          grid.innerHTML = "";
+          for (const l of lights) grid.appendChild(card(l));
+          setStatus(`Ready • ${lights.length} lights`);
+        } catch (e) {
+          setStatus("Error: " + e.message);
+        }
+      }
+
+      refresh();
+    </script>
+  </body>
+</html>

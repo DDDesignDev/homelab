@@ -1,0 +1,15 @@
+.DS_Store
+**/.DS_Store
+
+# Secrets / local overrides
+**/.env
+**/.env.*
+**/.env.example
+
+# Editor temp files
+**/*.swp
+**/*.swo
+
+# Python bytecode
+**/__pycache__/
+**/*.pyc

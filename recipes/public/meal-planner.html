@@ -1,0 +1,153 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Meal Planner</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="title">
+        <h1>Meal Planner</h1>
+        <div class="row" style="margin-top:0">
+          <button id="btnBack">Recipes</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <div style="width: 220px">
+          <div class="muted">Person</div>
+          <div class="row" style="margin-top:6px">
+            <select id="personSelect"></select>
+            <button id="btnAddPerson" type="button">Add</button>
+          </div>
+        </div>
+        <div style="flex:1; min-width: 200px">
+          <div class="muted">Start date</div>
+          <input id="start" type="date" />
+        </div>
+        <div style="width: 140px">
+          <div class="muted">Days</div>
+          <input id="days" type="number" min="1" max="31" value="7" />
+        </div>
+        <div style="align-self:flex-end">
+          <button id="btnLoad">Refresh</button>
+        </div>
+        <div class="muted" id="status" style="align-self:flex-end">Loading…</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="plannerLayout">
+      <!-- Left column -->
+      <div class="plannerMain">
+        <div class="card" style="margin-top:14px">
+          <div class="title">
+            <div style="font-size:16px">Add meal</div>
+          </div>
+
+          <div class="row" style="margin-top:10px">
+            <div style="width: 180px">
+              <div class="muted">Date</div>
+              <input id="fDay" type="date" />
+            </div>
+            <div style="width: 180px">
+              <div class="muted">Slot</div>
+              <select id="fSlot">
+                <option value="breakfast">breakfast</option>
+                <option value="lunch">lunch</option>
+                <option value="dinner" selected>dinner</option>
+                <option value="snack">snack</option>
+              </select>
+            </div>
+            <div style="width: 140px">
+              <div class="muted">Servings</div>
+              <input id="fServings" type="number" min="0.1" step="0.25" value="1" />
+            </div>
+            <div style="flex:1; min-width: 240px">
+              <div class="muted">Recipe</div>
+              <input id="fRecipeSearch" type="text" placeholder="Type to search..." autocomplete="off"
+                style="width: 100%; margin-bottom: 8px;" />
+              <select id="fRecipe"></select>
+              <div class="muted" id="fRecipeHint" style="margin-top:6px"></div>
+            </div>
+            <div style="align-self:flex-end">
+              <button id="btnAddMeal">Add</button>
+            </div>
+          </div>
+
+          <div class="muted" style="margin-top:10px">Notes (optional)</div>
+          <textarea id="fNotes" placeholder="e.g. double batch, swap broccoli for green beans"></textarea>
+        </div>
+        <div id="meals" style="margin-top:14px"></div>
+      </div>
+
+      <!-- Right column -->
+      <aside class="plannerSide">
+        <div id="nutritionReport" style="margin-top:14px; padding-bottom:24px;"></div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Edit Meal Modal -->
+  <div id="editModal" class="modal" aria-hidden="true">
+    <div class="modal-inner card" style="width:min(720px, 100%);">
+      <div class="title">
+        <div style="font-size:16px">Edit meal</div>
+        <div class="row" style="margin-top:0">
+          <button id="btnEditClose">Close</button>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <div style="width: 180px">
+          <div class="muted">Date</div>
+          <input id="eDay" type="date" />
+        </div>
+
+        <div style="width: 180px">
+          <div class="muted">Slot</div>
+          <select id="eSlot">
+            <option value="breakfast">breakfast</option>
+            <option value="lunch">lunch</option>
+            <option value="dinner">dinner</option>
+            <option value="snack">snack</option>
+          </select>
+        </div>
+
+        <div style="width: 140px">
+          <div class="muted">Servings</div>
+          <input id="eServings" type="number" min="0.1" step="0.25" value="1" />
+        </div>
+
+        <div style="flex:1; min-width: 240px">
+          <div class="muted">Recipe</div>
+          <input id="eRecipeSearch" type="text" placeholder="Type to search..." autocomplete="off"
+            style="width: 100%; margin-bottom: 8px;" />
+          <select id="eRecipe"></select>
+          <div class="muted" id="eRecipeHint" style="margin-top:6px"></div>
+        </div>
+      </div>
+
+      <div class="muted" style="margin-top:12px">Notes (optional)</div>
+      <textarea id="eNotes" placeholder="Add notes…"></textarea>
+
+      <div class="row" style="justify-content:flex-end; margin-top:12px">
+        <button id="btnEditSave">Save</button>
+      </div>
+
+      <div class="muted" id="editStatus" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+
+  <script src="/meal-planner.js" defer></script>
+</body>
+</html>

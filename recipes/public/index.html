@@ -1,0 +1,229 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Home Recipes</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="title">
+        <h1>🍲 Home Recipess</h1>
+        <div class="muted" id="status">Loading…</div>
+      </div>
+
+      <div class="row">
+        <input id="search" placeholder="Search recipes (title, description, tags)..." />
+        <button id="btnAdd">+ Add Recipe</button>
+        <button id="btnPlanner">Meal Planner</button>
+        <button id="btnRefresh">Refresh</button>
+      </div>
+
+      <div class="muted" style="margin-top:10px">
+        Tip: bookmark this page on your phone. “Cook mode” opens when you click a recipe.
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <!-- View Modal -->
+  <div class="modal" id="viewModal">
+    <div class="modal-inner card" id="viewCard"></div>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div class="modal" id="formModal">
+    <div class="modal-inner card">
+      <div class="title">
+        <div id="formTitle">Add Recipe</div>
+        <div class="row">
+          <span class="badge" id="editBadge" style="display:none">Editing</span>
+          <button id="btnFormClose">Close</button>
+        </div>
+      </div>
+
+      <div class="cols" style="margin-top:12px">
+        <div>
+          <div class="muted">Title</div>
+          <input id="fTitle" style="width:100%" placeholder="e.g. Chicken Alfredo" />
+
+          <div class="muted" style="margin-top:10px">Import from URL</div>
+          <div class="row">
+            <input id="fUrl" style="width:100%" placeholder="https://example.com/my-recipe" />
+            <button id="btnScrape" type="button">Import</button>
+          </div>
+          <div class="muted" style="margin-top:6px">Imports title, ingredients, steps, times, servings, and nutrition (when available).</div>
+
+          <div class="muted" style="margin-top:10px">Description</div>
+          <input id="fDesc" style="width:100%" placeholder="Short description (optional)" />
+
+          <div class="row" style="margin-top:10px">
+            <div style="flex:1">
+              <div class="muted">Servings</div>
+              <input id="fServ" type="number" placeholder="4" style="width:100%" />
+            </div>
+            <div style="flex:1">
+              <div class="muted">Prep (min)</div>
+              <input id="fPrep" type="number" placeholder="10" style="width:100%" />
+            </div>
+            <div style="flex:1">
+              <div class="muted">Cook (min)</div>
+              <input id="fCook" type="number" placeholder="20" style="width:100%" />
+            </div>
+          </div>
+
+          <div class="muted" style="margin-top:10px">Tags (comma-separated)</div>
+          <input id="fTags" style="width:100%" placeholder="quick, pasta, kid-friendly" />
+
+          <div class="muted">Ingredients (one per line)</div>
+          <textarea id="fIng" placeholder="2 chicken breasts&#10;1 cup cream&#10;..."></textarea>
+
+          <div class="muted" style="margin-top:10px">Steps (one per line)</div>
+          <textarea id="fSteps" placeholder="Boil pasta&#10;Cook chicken&#10;Mix sauce&#10;..."></textarea>
+
+          <div class="hr"></div>
+
+        </div>
+
+        <div>
+          <div class="sectionTitle">Nutrition Facts (optional)</div>
+          <div class="muted">
+            Per serving by default.
+            <span id="nutEditHint" style="display:none">(Leave blank to keep existing nutrition.)</span>
+          </div>
+
+          <div class="nutGrid">
+            <div>
+              <div class="muted">Serving size</div>
+              <input id="fNutServing" style="width:100%" placeholder="e.g. 1 bowl (350g)" />
+            </div>
+            <div>
+              <div class="muted">Calories (kcal)</div>
+              <input id="fNutCalories" type="number" style="width:100%" placeholder="450" />
+            </div>
+
+            <div class="nutRow">
+              <div>
+                <div class="muted">Carbs (g)</div>
+                <input id="fNutCarbs" type="number" step="0.1" style="width:100%" placeholder="42" />
+              </div>
+              <div>
+                <div class="muted">Sugar (g)</div>
+                <input id="fNutSugar" type="number" step="0.1" style="width:100%" placeholder="6" />
+              </div>
+            </div>
+
+            <div class="nutRow">
+              <div>
+                <div class="muted">Fat (g)</div>
+                <input id="fNutFat" type="number" step="0.1" style="width:100%" placeholder="18" />
+              </div>
+              <div>
+                <div class="muted">Sat fat (g)</div>
+                <input id="fNutSatFat" type="number" step="0.1" style="width:100%" placeholder="7" />
+              </div>
+            </div>
+
+            <div class="nutRow">
+              <div>
+                <div class="muted">Trans fat (g)</div>
+                <input id="fNutTransFat" type="number" step="0.1" style="width:100%" placeholder="0" />
+              </div>
+              <div>
+                <div class="muted">Protein (g)</div>
+                <input id="fNutProtein" type="number" step="0.1" style="width:100%" placeholder="32" />
+              </div>
+            </div>
+
+            <div class="nutRow">
+              <div>
+                <div class="muted">Fiber (g)</div>
+                <input id="fNutFiber" type="number" step="0.1" style="width:100%" placeholder="4" />
+              </div>
+              <div>
+                <div class="muted">Sodium (mg)</div>
+                <input id="fNutSodium" type="number" step="1" style="width:100%" placeholder="680" />
+              </div>
+            </div>
+
+            <div class="nutRow">
+              <div>
+                <div class="muted">Cholesterol (mg)</div>
+                <input id="fNutChol" type="number" step="1" style="width:100%" placeholder="95" />
+              </div>
+              <div>
+                <div class="muted">Potassium (mg)</div>
+                <input id="fNutPotassium" type="number" step="1" style="width:100%" placeholder="700" />
+              </div>
+            </div>
+
+            <div class="nutRow">
+              <div>
+                <div class="muted">Calcium (mg)</div>
+                <input id="fNutCalcium" type="number" step="1" style="width:100%" placeholder="220" />
+              </div>
+              <div>
+                <div class="muted">Iron (mg)</div>
+                <input id="fNutIron" type="number" step="0.1" style="width:100%" placeholder="2.4" />
+              </div>
+            </div>
+
+            <div class="nutRow">
+              <div>
+                <div class="muted">Vitamin A (IU)</div>
+                <input id="fNutVitA" type="number" step="1" style="width:100%" placeholder="500" />
+              </div>
+              <div>
+                <div class="muted">Vitamin D (IU)</div>
+                <input id="fNutVitD" type="number" step="1" style="width:100%" placeholder="80" />
+              </div>
+            </div>
+
+            <div class="nutRow">
+              <div>
+                <div class="muted">Vitamin C (mg)</div>
+                <input id="fNutVitC" type="number" step="0.1" style="width:100%" placeholder="12" />
+              </div>
+              <div>
+                <div class="muted">Vitamin B6 (mg)</div>
+                <input id="fNutB6" type="number" step="0.1" style="width:100%" placeholder="0.6" />
+              </div>
+            </div>
+
+            <div class="nutRow">
+              <div>
+                <div class="muted">Vitamin B12 (mcg)</div>
+                <input id="fNutB12" type="number" step="0.1" style="width:100%" placeholder="1.4" />
+              </div>
+              <div>
+                <div class="muted">Vitamin D (IU)</div>
+                <input id="fNutVitD2" type="number" step="1" style="width:100%" placeholder="(unused)" />
+              </div>
+            </div>
+          </div>
+
+          <div class="muted" style="margin-top:10px">
+            Leave nutrition blank if you don’t have it — it won’t be saved.
+          </div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <button id="btnSave">Save</button>
+        <button id="btnCancelEdit" style="display:none">Cancel Edit</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>

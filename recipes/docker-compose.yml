@@ -1,0 +1,35 @@
+services:
+  # Production instance of the recipes app
+  recipes:
+    build: .
+    container_name: recipes
+    env_file:
+      - .env
+    ports:
+      - "${RECIPES_HOST_PORT:-9100}:${PORT:-8000}"
+    volumes:
+      - recipes_uploads:/app/uploads
+    restart: unless-stopped
+    networks:
+      - homelab
+    environment:
+      # Your app should call this internally (service DNS name)
+      RECIPE_SCRAPER_URL: "http://recipe-scraper:8010"
+
+  # Scraper service for fetching recipes
+  recipe-scraper:
+    build: recipe-scraper
+    container_name: recipe-scraper
+    restart: unless-stopped
+    networks:
+      - homelab
+    # Optional: expose to host only if you want to curl from the Pi itself
+    ports:
+      - "8010:8010"
+
+networks:
+  homelab:
+    external: true
+
+volumes:
+  recipes_uploads: {}

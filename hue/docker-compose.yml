@@ -1,0 +1,15 @@
+services:
+  hue-dashboard:
+    build: .
+    container_name: hue-dashboard
+    env_file:
+      - .env
+    ports:
+      - "${HUE_HOST_PORT:-8000}:${PORT:-8000}"
+    restart: unless-stopped
+    networks:
+      - homelab
+
+networks:
+  homelab:
+    external: true
