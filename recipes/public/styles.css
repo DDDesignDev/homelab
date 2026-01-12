@@ -431,3 +431,58 @@ ol li{
   .grid{ gap: 12px; }
   .modal-inner{ max-height: 90vh; }
 }
+
+/* ---------- Print Styles ---------- */
+@media print {
+  /* Hide everything by default */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Show only the right column */
+  #printArea, #printArea * {
+    visibility: visible !important;
+  }
+
+  /* Make the print area fill the page */
+  #printArea {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Remove sticky header / nav */
+  header { display: none !important; }
+
+  /* Make it paper-friendly */
+  #printArea .card {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 16px !important;
+    background: #fff !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Remove glossy overlay */
+  #printArea .card::after {
+    display: none !important;
+  }
+
+  /* Hide buttons (copy/print) in print */
+  #printArea button {
+    display: none !important;
+  }
+
+  /* Optional: avoid weird background printing */
+  body {
+    background: #fff !important;
+  }
+}
+
+
