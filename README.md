@@ -1,8 +1,14 @@
 # Homelab Docker (Raspberry Pi)
 
-This folder is organized as small, separate compose projects that share one Docker network: `homelab`.
+Small, separate Docker Compose projects that share one Docker network: `homelab`.
 
-## Quick start guide
+## Overview
+
+- Each service lives in its own folder with a `docker-compose.yml`.
+- A shared stack provides Postgres, pgAdmin, and MinIO in `_shared/`.
+- All stacks attach to the external `homelab` network.
+
+## Quick start
 
 1) Create the shared network (one-time):
 
@@ -20,7 +26,28 @@ This folder is organized as small, separate compose projects that share one Dock
 - `make hue-up`
 - `make recipes-up`
 
-## Notes
+## Environment files
+
+- `.env` files are intentionally gitignored; use the `.env.example` templates as a starting point.
+- Each service folder contains its own `.env.example` next to its `docker-compose.yml`.
+
+## Services
+
+- Shared services: `_shared/README.md`
+- Homepage: `homepage/README.md`
+- Portainer: `portainer/README.md`
+- Uptime Kuma: `kuma/README.md`
+- Hue Dashboard: `hue/README.md`
+- Recipes app: `recipes/README.md`
+
+## Network and volumes
 
 - All compose files reference `networks: homelab: external: true`, so the `homelab` network must exist before `up`.
-- `.env` files are intentionally gitignored; use the included `.env.example` templates as a starting point (each app folder has its own `.env` next to its `docker-compose.yml`).
+- Volumes are declared per-service; see each service README for details.
+
+## Backups
+
+- Postgres backup helper: `_shared/scripts/backup_postgres.sh`
+- Backups output to `_shared/backups/`
+
+
