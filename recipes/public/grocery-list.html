@@ -1,122 +1,144 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Grocery List</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>🧺 Grocery List</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
 
-  <body>
-    <header class="app-header">
-      <div class="app-header__inner">
-        <h1>Grocery List</h1>
-        <nav class="app-nav">
-          <a href="meal-planner.html">Meal Planner</a>
-          <a class="active" href="grocery-list.html">Grocery List</a>
-        </nav>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="title">
+        <h1>🧺 Grocery List</h1>
+        <div class="row" style="margin-top:0">
+          <button id="btnPlanner">Meal Planner</button>
+          <button id="btnRecipes">Recipes</button>
+        </div>
       </div>
-    </header>
 
-    <main class="container">
-
-      <!-- Meals source -->
-      <section class="card">
-        <div class="row" style="justify-content: space-between; align-items:center;">
-          <h2 style="margin:0;">Add from meals (optional)</h2>
-          <label class="row" style="gap:.5rem; align-items:center;">
-            <input id="chkUseMeals" type="checkbox" checked />
-            Include meals
-          </label>
+      <!-- Header controls row (matches Meal Planner layout) -->
+      <div class="row">
+        <div style="width: 220px">
+          <div class="muted">Person</div>
+          <select id="personSelect"></select>
         </div>
 
-        <div class="grid" style="margin-top: .75rem;">
-          <label>
-            Person
-            <select id="personSelect"></select>
-          </label>
-
-          <label>
-            Start date
-            <input id="fromDate" type="date" />
-          </label>
-
-          <label>
-            End date
-            <input id="toDate" type="date" />
-          </label>
+        <div style="flex:1; min-width: 200px">
+          <div class="muted">Start date</div>
+          <input id="fromDate" type="date" />
         </div>
 
-        <p class="muted" style="margin-top:.75rem;">
-          Add meals from a meal plan. Serving counts are used to determine ingredient quantities.
-        </p>
-      </section>
+        <div style="flex:1; min-width: 200px">
+          <div class="muted">End date</div>
+          <input id="toDate" type="date" />
+        </div>
 
-      <!-- Manual recipes source -->
-      <section class="card">
-        <h2>Add individual recipes</h2>
-
-        <div class="grid">
-          <label style="grid-column: 1 / -1;">
-            Search recipes
-            <input id="recipeSearch" type="search" placeholder="e.g., lasagna, chicken, soup…" />
-          </label>
-
-          <div style="grid-column: 1 / -1;" class="row">
-            <button id="btnSearch" class="btn">Search</button>
-            <span id="searchStatus" class="muted"></span>
+        <div style="width: 220px">
+          <div class="muted">Include meals</div>
+          <div class="row" style="margin-top:6px">
+            <label class="row" style="margin-top:0; gap:8px;">
+              <input id="chkUseMeals" type="checkbox" checked style="width:auto;" />
+              <span>Yes</span>
+            </label>
           </div>
         </div>
 
-        <div class="card" style="margin-top: 1rem;">
-          <h3 style="margin-top:0;">Search results</h3>
-          <div id="recipeResults" class="list"></div>
+        <div style="width: 220px">
+          <div class="muted">Global multiplier</div>
+          <input id="multiplier" type="number" min="0.25" step="0.25" value="1" />
         </div>
 
-        <div class="card" style="margin-top: 1rem;">
-          <div class="row" style="justify-content: space-between; align-items:center;">
-            <h3 style="margin:0;">Selected recipes</h3>
-            <button id="btnClearSelected" class="btn">Clear</button>
+        <div style="width: 220px">
+          <div class="muted">Group by category</div>
+          <div class="row" style="margin-top:6px">
+            <label class="row" style="margin-top:0; gap:8px;">
+              <input id="chkGroup" type="checkbox" checked style="width:auto;" />
+              <span>Yes</span>
+            </label>
           </div>
-          <div id="selectedRecipes" class="list" style="margin-top:.75rem;"></div>
-          <p class="muted" style="margin-top:.75rem;">
-            Optional “servings factor” here is only for the grocery list (it won’t change the recipe).
-          </p>
-        </div>
-      </section>
-
-      <!-- Generate -->
-      <section class="card">
-        <h2>Generate</h2>
-
-        <div class="grid">
-          <label>
-            Global multiplier (optional)
-            <input id="multiplier" type="number" min="0.25" step="0.25" value="1" />
-          </label>
-
-          <label class="row" style="align-items:center; gap:.5rem;">
-            <input id="chkGroup" type="checkbox" checked />
-            Group by category
-          </label>
         </div>
 
-        <div class="row">
-          <button id="btnBuild" class="btn primary">Generate list</button>
-          <button id="btnCopy" class="btn" disabled>Copy</button>
-          <button id="btnPrint" class="btn" disabled>Print</button>
+        <div style="align-self:flex-end">
+          <button id="btnBuild">Generate</button>
         </div>
 
-        <p id="status" class="muted"></p>
-      </section>
+        <div class="muted" id="status" style="align-self:flex-end"></div>
+      </div>
+    </div>
+  </header>
 
-      <!-- Output -->
-      <section class="card">
-        <h2 style="margin-top:0;">Ingredients</h2>
-        <div id="results"></div>
-      </section>
-    </main>
+  <div class="wrap">
+    <div class="plannerLayout">
+      <!-- Left column -->
+      <div class="plannerMain">
+        <!-- Manual recipe add (like "Add meal" card) -->
+        <div class="card" style="margin-top:14px">
+          <div class="title">
+            <div style="font-size:16px">Add individual recipes</div>
+            <div class="row" style="margin-top:0">
+              <button id="btnClearSelected" type="button">Clear selected</button>
+            </div>
+          </div>
 
-    <script src="grocery.js"></script>
-  </body>
+          <div class="row" style="margin-top:10px">
+            <div style="flex:1; min-width: 240px">
+              <div class="muted">Search</div>
+              <input id="recipeSearch" type="search" placeholder="Type to search recipes…" />
+              <div class="muted" id="searchStatus" style="margin-top:6px"></div>
+            </div>
+
+            <div style="align-self:flex-end">
+              <button id="btnSearch" type="button">Search</button>
+            </div>
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="muted">Search results</div>
+          <div id="recipeResults" style="margin-top:10px"></div>
+        </div>
+
+        <!-- Selected recipes -->
+        <div class="card" style="margin-top:14px">
+          <div class="title">
+            <div style="font-size:16px">Selected recipes</div>
+          </div>
+          <div class="muted" style="margin-top:10px">
+            Set “Factor” to scale a recipe (e.g. 0.5 = half recipe).
+          </div>
+          <div id="selectedRecipes" style="margin-top:12px"></div>
+        </div>
+      </div>
+
+      <!-- Right column -->
+      <aside class="plannerSide">
+        <!-- Output / actions (like nutritionReport card area) -->
+        <div class="card" style="margin-top:14px; padding-bottom:24px;">
+          <div class="title">
+            <div style="font-size:16px">Ingredients</div>
+            <div class="row" style="margin-top:0">
+              <button id="btnCopy" disabled type="button">Copy</button>
+              <button id="btnPrint" disabled type="button">Print</button>
+            </div>
+          </div>
+
+          <div class="muted" style="margin-top:10px">
+            Includes meals (scaled by recipe servings) and any manually selected recipes.
+          </div>
+
+          <div class="hr"></div>
+
+          <div id="results"></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script src="/grocery.js" defer></script>
+</body>
 </html>

@@ -20,6 +20,8 @@ const chkGroup = document.getElementById("chkGroup");
 const btnBuild = document.getElementById("btnBuild");
 const btnCopy = document.getElementById("btnCopy");
 const btnPrint = document.getElementById("btnPrint");
+const btnPlanner = document.getElementById("btnPlanner");
+const btnRecipes = document.getElementById("btnRecipes");
 
 const resultsEl = document.getElementById("results");
 
@@ -157,6 +159,7 @@ function renderList(items, grouped) {
 
   if (!grouped) {
     const ul = document.createElement("ul");
+    ul.style.fontSize = "12px";
     ul.className = "list";
     for (const it of items) {
       const li = document.createElement("li");
@@ -179,11 +182,14 @@ function renderList(items, grouped) {
     const section = document.createElement("div");
     section.className = "group";
 
-    const h = document.createElement("h3");
+    const h = document.createElement("div");
+    h.style.fontWeight = "700";
+    h.style.fontSize = "13px";
     h.textContent = cat;
     section.appendChild(h);
 
     const ul = document.createElement("ul");
+    ul.style.fontSize = "12px";
     ul.className = "list";
     arr.forEach((it) => {
       const li = document.createElement("li");
@@ -379,11 +385,13 @@ async function buildGroceryList() {
   setStatus("Building grocery list…");
 
   try {
-    // Collect recipe IDs from meals + manual selection
-    // Map recipe_id -> factor (so meals can count multiple times properly)
+    // Map recipe_id -> total factor (meals scaled by recipe.servings, plus manual factors)
     const recipeFactorById = new Map();
 
-    // A) from meals (optional): factor = sum of meal.servings
+    // We'll also cache recipes we fetch so we don't refetch later
+    const recipeCache = new Map(); // id -> RecipeOut
+
+    // A) From meals (optional)
     if (useMeals) {
       setStatus("Loading meals…");
       const url =
@@ -391,15 +399,47 @@ async function buildGroceryList() {
 
       const meals = await apiGet(url);
 
-      for (const m of meals || []) {
-        const id = String(m.recipe_id);
-        const servings = clampMultiplier(Number(m.servings ?? 1));
-        const prev = recipeFactorById.get(id) || 0;
-        recipeFactorById.set(id, prev + servings);
+      // Collect recipe IDs present in meals
+      const mealRecipeIds = Array.from(
+        new Set((meals || []).map(m => String(m.recipe_id)).filter(Boolean))
+      );
+
+      if (mealRecipeIds.length > 0) {
+        setStatus(`Loading ${mealRecipeIds.length} recipes for meal scaling…`);
+
+        // Fetch recipes needed to compute scaling (meal.servings / recipe.servings)
+        const mealRecipes = await Promise.all(
+          mealRecipeIds.map(id => apiGet(`/api/recipes/${encodeURIComponent(id)}`).catch(() => null))
+        );
+
+        for (const r of mealRecipes.filter(Boolean)) {
+          recipeCache.set(String(r.id), r);
+        }
+
+        // Add meal factors
+        for (const m of meals || []) {
+          const id = String(m.recipe_id);
+          const recipe = recipeCache.get(id);
+
+          // Meal servings (desired servings)
+          const mealServings = clampMultiplier(Number(m.servings ?? 1));
+
+          // Recipe base servings (how many servings the ingredient list represents)
+          // If missing/null/0, fall back to 1 so it doesn't explode.
+          const recipeServingsRaw = recipe ? Number(recipe.servings ?? 1) : 1;
+          const recipeServings = recipeServingsRaw > 0 ? recipeServingsRaw : 1;
+
+          // ✅ Scale meal to recipe:
+          // e.g. want 4 servings from a recipe that makes 8 => 0.5x ingredients
+          const mealFactor = mealServings / recipeServings;
+
+          const prev = recipeFactorById.get(id) || 0;
+          recipeFactorById.set(id, prev + mealFactor);
+        }
       }
     }
 
-    // B) manual selected recipes (optional): add their factor
+    // B) Manual selected recipes (optional): add their factor directly (already behaves like you want)
     for (const [id, r] of selectedRecipeMap.entries()) {
       const factor = clampMultiplier(Number(r.factor ?? 1));
       const prev = recipeFactorById.get(id) || 0;
@@ -413,20 +453,29 @@ async function buildGroceryList() {
       return;
     }
 
-    setStatus(`Loading ${allIds.length} recipes…`);
+    // Fetch any recipes not already cached (manual-only recipes)
+    const missingIds = allIds.filter(id => !recipeCache.has(String(id)));
 
-    const recipes = await Promise.all(
-      allIds.map((id) => apiGet(`/api/recipes/${encodeURIComponent(id)}`).catch(() => null))
-    );
+    if (missingIds.length > 0) {
+      setStatus(`Loading ${missingIds.length} more recipes…`);
+      const more = await Promise.all(
+        missingIds.map(id => apiGet(`/api/recipes/${encodeURIComponent(id)}`).catch(() => null))
+      );
+      for (const r of more.filter(Boolean)) {
+        recipeCache.set(String(r.id), r);
+      }
+    }
 
     setStatus("Aggregating ingredients…");
     const agg = new Map();
 
-    for (const recipe of recipes.filter(Boolean)) {
-      const id = String(recipe.id);
-      const baseFactor = recipeFactorById.get(id) || 1;
+    for (const id of allIds) {
+      const recipe = recipeCache.get(String(id));
+      if (!recipe) continue;
 
-      // final factor: (meals servings + manual factor) * globalMult
+      const baseFactor = recipeFactorById.get(String(id)) || 1;
+
+      // final factor includes global multiplier
       const finalFactor = baseFactor * globalMult;
 
       const lines = splitIngredients(recipe.ingredients);
@@ -446,6 +495,8 @@ async function buildGroceryList() {
 
     btnCopy.disabled = false;
     btnPrint.disabled = false;
+
+    // Helpful debug-ish summary in the status
     setStatus(`Done — ${items.length} unique items.`);
   } catch (e) {
     setStatus(e?.message || "Failed to build grocery list.");
@@ -483,6 +534,9 @@ btnCopy.addEventListener("click", async () => {
 
 btnPrint.addEventListener("click", () => window.print());
 btnBuild.addEventListener("click", buildGroceryList);
+
+btnPlanner.addEventListener("click", () => { window.location.href = "/meal-planner.html"; });
+btnRecipes.addEventListener("click", () => { window.location.href = "/index.html"; });
 
 chkUseMeals.addEventListener("change", () => {
   // optional: disable inputs when unchecked
