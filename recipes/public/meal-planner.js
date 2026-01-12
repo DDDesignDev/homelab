@@ -7,6 +7,7 @@ const btnLoad = document.getElementById("btnLoad");
 const btnBack = document.getElementById("btnBack");
 const personSelect = document.getElementById("personSelect");
 const btnAddPerson = document.getElementById("btnAddPerson");
+const btnList = document.getElementById("btnList");
 
 const fDay = document.getElementById("fDay");
 const fSlot = document.getElementById("fSlot");
@@ -708,5 +709,8 @@ btnEditSave.addEventListener("click", async () => {
     btnEditSave.disabled = false;
   }
 });
+
+btnList.addEventListener("click", () => { window.location.href = "/grocery-list.html"; });
+
 
 boot();

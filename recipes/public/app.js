@@ -6,6 +6,7 @@ const searchEl = document.getElementById("search");
 
 const btnAdd = document.getElementById("btnAdd");
 const btnPlanner = document.getElementById("btnPlanner");
+const btnList = document.getElementById("btnList");
 const btnRefresh = document.getElementById("btnRefresh");
 
 const viewModal = document.getElementById("viewModal");
@@ -458,6 +459,7 @@ async function submit() {
 // ---------- Wire up events ----------
 btnAdd.addEventListener("click", () => { beginAddMode(); openForm(); });
 btnPlanner.addEventListener("click", () => { window.location.href = "/meal-planner.html"; });
+btnList.addEventListener("click", () => { window.location.href = "/grocery-list.html"; });
 btnRefresh.addEventListener("click", load);
 
 btnFormClose.addEventListener("click", closeForm);
