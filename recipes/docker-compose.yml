@@ -15,6 +15,7 @@ services:
     environment:
       # Your app should call this internally (service DNS name)
       RECIPE_SCRAPER_URL: "http://recipe-scraper:8010"
+      AI_RECIPES_URL: "http://ai-recipes:8020"
 
   # Scraper service for fetching recipes
   recipe-scraper:
@@ -26,6 +27,19 @@ services:
     # Optional: expose to host only if you want to curl from the Pi itself
     ports:
       - "8010:8010"
+  
+  ai-recipes:
+    build: ai-recipes
+    container_name: ai-recipes
+    env_file:
+      - ai-recipes/.env
+    environment:
+      OPENAI_MODEL: "gpt-4.1-mini"
+    ports:
+      - "8020:8020"
+    restart: unless-stopped
+    networks:
+      - homelab
 
 networks:
   homelab:
