@@ -23,7 +23,14 @@ const btnCancelEdit = document.getElementById("btnCancelEdit");
 const urlEl = document.getElementById("fUrl");
 const btnScrape = document.getElementById("btnScrape");
 
+const aiPromptEl = document.getElementById("aiPrompt");
+const btnAiSuggest = document.getElementById("btnAiSuggest");
+const btnAiClear = document.getElementById("btnAiClear");
+const aiStatusEl = document.getElementById("aiStatus");
+
 let editingId = null;
+let aiSuggestedIds = new Set();
+let allRecipes = [];
 
 function setStatus(t) { statusEl.textContent = t; }
 
@@ -55,7 +62,9 @@ function fmtNum(n, suffix = "") {
 // ---------- Rendering ----------
 function card(r) {
   const el = document.createElement("div");
-  el.className = "card clickable";
+  const isAi = aiSuggestedIds.has(r.id);
+
+  el.className = "card clickable" + (isAi ? " ai-pick" : "");
   el.onclick = () => openView(r.id);
 
   const tags = (r.tags || []).slice(0, 4).map(pill).join("");
@@ -69,7 +78,10 @@ function card(r) {
 
   el.innerHTML = `
     <div class="title">
-      <div>${escapeHtml(r.title)}</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div>${escapeHtml(r.title)}</div>
+        ${isAi ? `<span class="badge" title="AI suggested">✨ AI pick</span>` : ``}
+      </div>
       <div class="muted">#${r.id}</div>
     </div>
     <div class="muted" style="margin-top:6px">${escapeHtml(r.description || "")}</div>
@@ -79,6 +91,38 @@ function card(r) {
   return el;
 }
 
+function render() {
+  const q = searchEl.value.trim().toLowerCase();
+
+  let items = allRecipes;
+
+  // Client-side filter so AI re-render doesn’t lose the user’s current list
+  if (q) {
+    items = items.filter(r => {
+      const hay = [
+        r.title,
+        r.description,
+        ...(r.tags || [])
+      ].filter(Boolean).join(" ").toLowerCase();
+      return hay.includes(q);
+    });
+  }
+
+  // Pin AI picks to top
+  items = items.slice().sort((a, b) => {
+    const as = aiSuggestedIds.has(a.id) ? 1 : 0;
+    const bs = aiSuggestedIds.has(b.id) ? 1 : 0;
+    return bs - as;
+  });
+
+  grid.innerHTML = "";
+  items.forEach(r => grid.appendChild(card(r)));
+
+  const aiCount = [...aiSuggestedIds].filter(id => items.some(r => r.id === id)).length;
+  const aiText = aiCount ? ` • AI picks: ${aiCount}` : "";
+  setStatus(`Ready • ${items.length} recipes${aiText}`);
+}
+
 async function load() {
   setStatus("Loading…");
   const q = searchEl.value.trim();
@@ -86,9 +130,8 @@ async function load() {
 
   try {
     const items = await api(url);
-    grid.innerHTML = "";
-    items.forEach(r => grid.appendChild(card(r)));
-    setStatus(`Ready • ${items.length} recipes`);
+    allRecipes = Array.isArray(items) ? items : [];
+    render();
   } catch (e) {
     setStatus("Error: " + e.message);
   }
@@ -478,6 +521,60 @@ searchEl.addEventListener("input", () => {
   clearTimeout(window.__t);
   window.__t = setTimeout(load, 250);
 });
+
+btnAiSuggest?.addEventListener("click", async () => {
+  const prompt = (aiPromptEl?.value || "").trim();
+  if (!prompt) {
+    aiStatusEl.textContent = "Type what you want first 🙂";
+    return;
+  }
+
+  aiStatusEl.textContent = "Thinking…";
+  btnAiSuggest.disabled = true;
+
+  try {
+    const res = await fetch("/api/ai/suggest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt, limit: 30 }), // send top 30 recipes as options
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+
+    const data = await res.json();
+    const suggestions = data.suggestions || [];
+
+    aiSuggestedIds = new Set(suggestions.map(s => s.id));
+
+    // Show a short status message
+    if (suggestions.length === 0) {
+      aiStatusEl.textContent = "No good matches found.";
+    } else {
+      aiStatusEl.textContent =
+        "Top picks: " + suggestions.map(s => s.title).join(" • ");
+    }
+
+    // Re-render your grid (important)
+    render();
+
+    // Show clear button
+    btnAiClear.style.display = "inline-block";
+  } catch (err) {
+    aiStatusEl.textContent = "AI failed. Try again.";
+    console.error(err);
+  } finally {
+    btnAiSuggest.disabled = false;
+  }
+});
+
+btnAiClear?.addEventListener("click", () => {
+  aiSuggestedIds = new Set();
+  aiStatusEl.textContent = "";
+  btnAiClear.style.display = "none";
+  render();
+});
+
+
 
 // boot
 load();

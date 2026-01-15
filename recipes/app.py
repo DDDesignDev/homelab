@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field, HttpUrl
 import requests
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from ai import router as ai_router
 
 load_dotenv()
 
@@ -152,6 +153,7 @@ def to_out(r: Recipe) -> RecipeOut:
 
 
 app = FastAPI(title="Home Recipes")
+app.include_router(ai_router)
 
 from meal_planner import ensure_meal_planner_schema, register_meal_planner_routes  # noqa: E402
 
